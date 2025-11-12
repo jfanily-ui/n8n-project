@@ -1,0 +1,317 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2912,
+        576
+      ],
+      "id": "bda5b5fd-5e61-4136-b4a6-d3bfb19a09eb",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const min = 1; // minimum value\nconst max = 7; // maximum value\nconst randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;\nreturn [{ json: { randomNumber } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3136,
+        576
+      ],
+      "id": "364fdd92-b5f9-49f4-a92d-0c50cb587eef",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=generate a prompt for {{ $json.randomNumber }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an AI that generates random video prompts for short form content.\nYour ONLY output must strictly follow this JSON structure:\n\n{\n  \"title\": \"Exciting, descriptive, simplistic title here\",\n  \"description\": \"Short, few sentence description based on the story\",\n  \"prompt\": \"AI video generation prompt here\"\n}\n\nGuidelines:\nThe \"title\" must be short, eye-catching, and easy to understand.\nThe \"description\" should be 1-3 sentences summarizing the crazy event in a fun, engaging way.\nThe \"prompt\" must be a detailed AI video generation prompt describing the scene from the primary video types below. Always choose a random one.\nNever break JSON format. Never add extra text or explanation outside the JSON.\nNever repeat a video, always cycle through them.\n\nPrimary Video Types:\n\n1.Home camera video of a baby in a onesie curiously climbing up to a high open window when a dog comes up from behind and grabs the baby and pulls it down from the window backward to the floor to stop the baby from falling out. After this, the mom comes rushing in to check what happened.\n\n2.Grocery store footage of a man jumping while pushing his shopping cart, then losing control and knocking over all of the shelves in the store.\n\n3.Home camera video of a person and their dog and cat, there is a big mess on the floor and the cat is meowing and pointing at the dog, the dog looks guilty and the owner is listening to the cat.\n\n4.Home camera video of a man on the toilet, when suddenly an animal smashes through the bathroom window and runs around inside, chaotic.\n\n5.A kid is curiously playing near an electrical outlet which zaps when touched, when a dog comes over and pulls the kid away, the parents come in afterward.\n\n6.Low quality wobbly smartphone footage of a dinner table with lots of people, when suddenly a cat jumps from a balcony in the home onto the chandelier and swings from it, when the chandelier falls onto the table.\n\n7.Low quality steady smartphone footage of a couple being married and about to cut a massive wedding cake with a dog looking at it, when suddenly before they cut the cake the dog jumps up and bites the cake and everyone freaks out."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        3360,
+        576
+      ],
+      "id": "ab1d6fd0-0f0d-4808-aba7-1ef8e79ea62a",
+      "name": "money agent"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3504,
+        1008
+      ],
+      "id": "e32cacc5-ae0a-48e3-93c6-ea3de2996b6b",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0VxjVIedr1zXUwgF",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        3440,
+        800
+      ],
+      "id": "2b650671-f8d7-42d4-884d-1e835bbe62c7",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"description\": \"Exciting, descriptive, simplistic title\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"description\": \"Short, few sentence description based on the story\"\n    },\n    \"prompt\": {\n      \"type\": \"string\",\n      \"description\": \"AI video generation prompt describing the scene\"\n    }\n  },\n  \"required\": [\"title\", \"description\", \"prompt\"]\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        3568,
+        800
+      ],
+      "id": "b3fc8e48-6122-439a-835d-6372b1b385ac",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"sora-2-text-to-video\",\n  \"callBackUrl\": \"https://your-domain.com/api/callback\",\n  \"input\": {\n    \"prompt\": \"{{ $json.output.prompt }}\",\n    \"aspect_ratio\": \"portrait\",\n    \"n_frames\": \"10\",\n    \"remove_watermark\": true\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3840,
+        464
+      ],
+      "id": "bc3ac817-8f10-46e0-9129-4aa7fb22f296",
+      "name": "Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YYuFi25cdV6wmmKw",
+          "name": "kie.ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3824,
+        688
+      ],
+      "id": "8db94dd2-fc82-4f82-b134-7840dd41fce7",
+      "name": "Wait",
+      "webhookId": "c4f1915e-ed60-4b9e-ab70-02992797970f"
+    },
+    {
+      "parameters": {
+        "url": "https://api.kie.ai/api/v1/jobs/recordInfo",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.data.taskId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4080,
+        688
+      ],
+      "id": "c446aac8-1c6e-4d0b-a3a3-05567c3d0fcc",
+      "name": "Get",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YYuFi25cdV6wmmKw",
+          "name": "kie.ai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data.resultJson ? JSON.parse($json.data.resultJson).video_url : '' }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "d36760f4-9a55-4da0-8133-e8d64bfe3067",
+      "name": "Download Video File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        4272,
+        688
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "money agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "money agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "money agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "money agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "money agent": {
+      "main": [
+        [
+          {
+            "node": "Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get": {
+      "main": [
+        [
+          {
+            "node": "Download Video File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Video File": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "63212bbe-5d45-4713-ae2e-8e8d6079e405",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eff4e7c292b19626fe89cf6cb1f3770a194b334936d31933de1ae29688e348e4"
+  },
+  "id": "ndVsPJ9rWuYFjSLX",
+  "tags": []
+}
